@@ -11,6 +11,7 @@ import com.example.backend_taller.repository.RolRepository;
 import com.example.backend_taller.repository.TallerRepository;
 import com.example.backend_taller.repository.UsuarioRepository;
 import com.example.backend_taller.service.UsuarioService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UsuarioResponseDto crear(UsuarioRequestDto dto){
+    public UsuarioResponseDto crear(UsuarioRequestDto dto, HttpServletRequest request){
+
+        String rolLogueado = (String) request.getAttribute("rol");
+        Integer tallerIdToken = (Integer) request.getAttribute("tallerId");
 
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("El email ya esta registrado");
@@ -37,20 +41,47 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         RolEntity rolEntity = rolRepository.findById(dto.getRolId()).orElseThrow(()-> new ResourceNotFoundException("Rol no encontrado"));
 
+        if ("SUPER_ADMIN".equals(rolLogueado)) {
+            if (dto.getTallerId() == null) {
+                throw new IllegalArgumentException("Debe de especificar el taller");
+            }
+        }
+
+        if ("ADMIN_TALLER".equals(rolLogueado)) {
+
+            dto.setTallerId(tallerIdToken.intValue());
+
+            if ("SUPER_ADMIN".equals(rolEntity.getNombre()) || "ADMIN_TALLER".equals(rolEntity.getNombre())) {
+                throw new IllegalArgumentException("No tienes permiso para crear ese rol");
+            }
+        }
+
+        if ("RECEPCIONISTA".equals(rolLogueado)) {
+
+            if (!"CLIENTE".equals(rolEntity.getNombre())) {
+
+                throw new IllegalArgumentException("Recepcionista solo puede crear clientes");
+            }
+
+            dto.setTallerId(tallerIdToken.intValue());
+        }
+
         TallerEntity tallerEntity = tallerRepository.findById(dto.getTallerId()).orElseThrow(()-> new ResourceNotFoundException("Taller no encontrado"));
 
         if (!tallerEntity.getActivo()) {
             throw new ResourceNotFoundException("El taller está inactivo");
         }
 
-        UsuarioEntity usuarioEntity = usuarioMapper.toEntity(dto, rolEntity, tallerEntity);
+        if ("ADMIN_TALLER".equals(rolEntity.getNombre())) {
 
-        if (rolEntity.getNombre().equals("ADMIN_TALLER")) {
-            if (!usuarioRepository.findByTallerEntityIdAndRolEntityNombre(tallerEntity.getId(), "ADMIN_TALLER").isEmpty()) {
-                throw new ResourceNotFoundException("El taller ya tiene un administrador asignado");
+            if (!usuarioRepository
+                    .findByTallerEntityIdAndRolEntityNombre(tallerEntity.getId(), "ADMIN_TALLER")
+                    .isEmpty()) {
+                throw new IllegalArgumentException("El taller ya tiene un administrador asignado");
             }
         }
 
+        UsuarioEntity usuarioEntity = usuarioMapper.toEntity(dto, rolEntity, tallerEntity);
         //Encripta contraseña
         usuarioEntity.setPassword(passwordEncoder.encode(dto.getPassword()));
 
@@ -60,8 +91,24 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    public List<UsuarioResponseDto> listar(){
-        return usuarioRepository.findAll()
+    public List<UsuarioResponseDto> listar(HttpServletRequest request){
+       String rolLogueado = (String) request.getAttribute("rol");
+       Long tallerIdLong = (Long) request.getAttribute("tallerId");
+       Integer tallerIdToken = tallerIdLong.intValue();
+
+       List<UsuarioEntity> usuarios;
+        if ("SUPER_ADMIN".equals(rolLogueado)) {
+            usuarios = usuarioRepository.findAll();
+        } else if ("ADMIN_TALLER".equals(rolLogueado)) {
+            usuarios = usuarioRepository.findByTallerEntityId(tallerIdToken);
+        } else if ("RECEPCIONISTA".equals(rolLogueado)) {
+            usuarios = usuarioRepository
+                    .findByTallerEntityIdAndRolEntityNombre(tallerIdToken, "CLIENTE");
+        }else {
+            throw new IllegalArgumentException("No tienes permisos para listar usuarios ");
+        }
+
+        return usuarios
                 .stream()
                 .map(usuarioMapper::toResponseDto)
                 .toList();
@@ -82,6 +129,4 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
         usuarioRepository.deleteById(id);
     }
-
-
 }
