@@ -1,2 +1,2 @@
 # moto-taller-backend
-API Spring Boot para la gestión de talleres de motocicletas.
+API Spring Boot para la gestión de ordenes de trabajo para talleres de motocicletas.
