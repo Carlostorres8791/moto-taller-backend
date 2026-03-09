@@ -92,24 +92,37 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public List<UsuarioResponseDto> listar(HttpServletRequest request){
-       String rolLogueado = (String) request.getAttribute("rol");
-       Long tallerIdLong = (Long) request.getAttribute("tallerId");
-       Integer tallerIdToken = tallerIdLong.intValue();
 
-       List<UsuarioEntity> usuarios;
-        if ("SUPER_ADMIN".equals(rolLogueado)) {
-            usuarios = usuarioRepository.findAll();
-        } else if ("ADMIN_TALLER".equals(rolLogueado)) {
-            usuarios = usuarioRepository.findByTallerEntityId(tallerIdToken);
-        } else if ("RECEPCIONISTA".equals(rolLogueado)) {
-            usuarios = usuarioRepository
-                    .findByTallerEntityIdAndRolEntityNombre(tallerIdToken, "CLIENTE");
-        }else {
-            throw new IllegalArgumentException("No tienes permisos para listar usuarios ");
+        String rolLogueado = (String) request.getAttribute("rol");
+
+        List<UsuarioEntity> usuarios;
+
+        switch (rolLogueado) {
+
+            case "SUPER_ADMIN":
+                usuarios = usuarioRepository.findAll();
+                break;
+
+            case "ADMIN_TALLER":
+            case "RECEPCIONISTA":
+                Long tallerIdLong = (Long) request.getAttribute("tallerId");
+                if (tallerIdLong == null) {
+                    throw new RuntimeException("El token no contiene tallerId");
+                }
+                Integer tallerId = tallerIdLong.intValue();
+
+                if ("ADMIN_TALLER".equals(rolLogueado)) {
+                    usuarios = usuarioRepository.findByTallerEntityId(tallerId);
+                } else { // RECEPCIONISTA
+                    usuarios = usuarioRepository.findByTallerEntityIdAndRolEntityNombre(tallerId, "CLIENTE");
+                }
+                break;
+
+            default:
+                throw new IllegalArgumentException("No tienes permisos para listar usuarios");
         }
 
-        return usuarios
-                .stream()
+        return usuarios.stream()
                 .map(usuarioMapper::toResponseDto)
                 .toList();
     }
