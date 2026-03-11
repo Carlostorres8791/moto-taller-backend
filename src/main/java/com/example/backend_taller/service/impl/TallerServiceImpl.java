@@ -1,11 +1,13 @@
 package com.example.backend_taller.service.impl;
 
 import com.example.backend_taller.dtos.requests.TallerConAdminRequestDto;
+import com.example.backend_taller.dtos.requests.TallerUpdateRequestDto;
 import com.example.backend_taller.dtos.responses.TallerResponseDto;
 import com.example.backend_taller.entity.RolEntity;
 import com.example.backend_taller.entity.TallerEntity;
 import com.example.backend_taller.entity.UsuarioEntity;
 import com.example.backend_taller.exception.ResourceNotFoundException;
+import com.example.backend_taller.mapper.TallerMapper;
 import com.example.backend_taller.repository.RolRepository;
 import com.example.backend_taller.repository.TallerRepository;
 import com.example.backend_taller.repository.UsuarioRepository;
@@ -26,6 +28,7 @@ public class TallerServiceImpl implements TallerService {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TallerMapper mapper;
 
     @Override
     public TallerResponseDto crearTallerConAdmin(TallerConAdminRequestDto dto){
@@ -68,6 +71,21 @@ public class TallerServiceImpl implements TallerService {
         response.setEmailAdmin(admin.getEmail());
 
         return response;
+    }
+
+    @Override
+    public TallerResponseDto actualizar(Integer id, TallerUpdateRequestDto dto){
+
+        TallerEntity taller = tallerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Taller no encontrado"));
+
+        taller.setNombre(dto.getNombreTaller());
+        taller.setDireccion(dto.getDireccion());
+        taller.setTelefono(dto.getTelefono());
+
+        TallerEntity actualizado = tallerRepository.save(taller);
+
+        return mapper.toDto(actualizado);
     }
 
     @Override

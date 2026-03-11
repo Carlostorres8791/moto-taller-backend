@@ -1,6 +1,7 @@
 package com.example.backend_taller.controller;
 
 import com.example.backend_taller.dtos.requests.TallerConAdminRequestDto;
+import com.example.backend_taller.dtos.requests.TallerUpdateRequestDto;
 import com.example.backend_taller.dtos.responses.TallerResponseDto;
 import com.example.backend_taller.service.TallerService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,11 @@ public class TallerController {
     @PostMapping
     public TallerResponseDto crear(@RequestBody TallerConAdminRequestDto taller){
         return service.crearTallerConAdmin(taller);
+    }
+
+    @PutMapping("/{id}")
+    public TallerResponseDto actualizar(@PathVariable Integer id, @RequestBody TallerUpdateRequestDto dto){
+        return service.actualizar(id, dto);
     }
 
     @GetMapping("/activos")
