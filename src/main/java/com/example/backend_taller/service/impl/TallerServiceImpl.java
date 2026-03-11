@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.lang.module.ResolutionException;
 import java.util.List;
 
 @Service
@@ -139,6 +140,15 @@ public class TallerServiceImpl implements TallerService {
                 .orElseThrow(()-> new ResourceNotFoundException("Taller no encontrado "));
 
         tallerEntity.setActivo(false);
+        tallerRepository.save(tallerEntity);
+    }
+
+    @Override
+    public void activar(Integer id){
+        TallerEntity tallerEntity = tallerRepository.findById(id)
+                .orElseThrow(()-> new ResolutionException("Taller activado"));
+
+        tallerEntity.setActivo(true);
         tallerRepository.save(tallerEntity);
     }
 

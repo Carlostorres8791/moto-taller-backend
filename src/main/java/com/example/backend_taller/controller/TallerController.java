@@ -53,4 +53,7 @@ public class TallerController {
         service.desactivar(id);
     }
 
+    @PutMapping("/activar/{id}")
+    public void activar(@PathVariable Integer id) { service.activar(id); }
+
 }

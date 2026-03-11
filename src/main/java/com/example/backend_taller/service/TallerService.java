@@ -19,5 +19,7 @@ public interface TallerService {
 
     void desactivar(Integer id);
 
+    void activar(Integer id);
+
     void eliminar(Integer id);
 }
