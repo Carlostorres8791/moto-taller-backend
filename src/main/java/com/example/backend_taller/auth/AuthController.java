@@ -48,7 +48,14 @@ public class AuthController {
                 tallerId
         );
 
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(
+                new LoginResponseDto(
+                        token,
+                        user.getNombre(),
+                        user.getRolEntity().getNombre(),
+                        tallerId
+                )
+        );
     }
 
 }
