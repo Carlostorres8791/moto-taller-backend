@@ -4,6 +4,7 @@ import com.example.backend_taller.dtos.requests.TallerConAdminRequestDto;
 import com.example.backend_taller.dtos.requests.TallerUpdateRequestDto;
 import com.example.backend_taller.dtos.responses.TallerResponseDto;
 import com.example.backend_taller.service.TallerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class TallerController {
     private final TallerService service;
 
     @PostMapping
-    public TallerResponseDto crear(@RequestBody TallerConAdminRequestDto taller){
+    public TallerResponseDto crear(@Valid @RequestBody TallerConAdminRequestDto taller){
         return service.crearTallerConAdmin(taller);
     }
 
