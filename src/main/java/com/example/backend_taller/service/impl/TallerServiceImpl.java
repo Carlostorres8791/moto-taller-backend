@@ -43,6 +43,8 @@ public class TallerServiceImpl implements TallerService {
 
         RolEntity rolEntityAdmin = rolRepository.findByNombre("ADMIN_TALLER").orElseThrow(()-> new ResourceNotFoundException("Rol ADMIN_TALLER no encontrado"));
 
+
+        //Crear Taller
         TallerEntity tallerEntity = new TallerEntity();
 
         tallerEntity.setNombre(dto.getNombreTaller());
@@ -52,6 +54,8 @@ public class TallerServiceImpl implements TallerService {
 
         TallerEntity tallerEntityGuardado = tallerRepository.save(tallerEntity);
 
+
+        //Crear Admin_Taller
         UsuarioEntity admin = new UsuarioEntity();
         admin.setNombre(dto.getNombreAdmin());
         admin.setEmail(dto.getEmailAdmin());
@@ -62,16 +66,7 @@ public class TallerServiceImpl implements TallerService {
 
         usuarioRepository.save(admin);
 
-        TallerResponseDto response = new TallerResponseDto();
-        response.setId(tallerEntityGuardado.getId());
-        response.setNombre(tallerEntityGuardado.getNombre());
-        response.setDireccion(tallerEntityGuardado.getDireccion());
-        response.setTelefono(tallerEntityGuardado.getTelefono());
-        response.setActivo(tallerEntityGuardado.getActivo());
-        response.setNombreAdmin(admin.getNombre());
-        response.setEmailAdmin(admin.getEmail());
-
-        return response;
+        return mapper.toDto(tallerEntityGuardado,admin);
     }
 
     @Override
@@ -86,19 +81,20 @@ public class TallerServiceImpl implements TallerService {
 
         TallerEntity actualizado = tallerRepository.save(taller);
 
-        return mapper.toDto(actualizado);
+        UsuarioEntity usuario = usuarioRepository.findByTallerEntity(actualizado)
+                .orElse(null);
+
+        return mapper.toDto(actualizado, usuario);
     }
 
     @Override
     public List<TallerResponseDto> listarActivos(){
         return tallerRepository.findByActivoTrue().stream().map(t ->{
-            TallerResponseDto dto = new TallerResponseDto();
-            dto.setId(t.getId());
-            dto.setNombre(t.getNombre());
-            dto.setDireccion(t.getDireccion());
-            dto.setTelefono(t.getTelefono());
-            dto.setActivo(t.getActivo());
-            return dto;
+
+            UsuarioEntity usuario = usuarioRepository
+                    .findByTallerEntity(t)
+                    .orElse(null);
+            return mapper.toDto(t, usuario);
         })
                 .toList();
     }
@@ -106,14 +102,12 @@ public class TallerServiceImpl implements TallerService {
     @Override
     public List<TallerResponseDto> listar(){
         return tallerRepository.findAll().stream().map(t ->{
-                    TallerResponseDto dto = new TallerResponseDto();
-                    dto.setId(t.getId());
-                    dto.setNombre(t.getNombre());
-                    dto.setDireccion(t.getDireccion());
-                    dto.setTelefono(t.getTelefono());
-                    dto.setActivo(t.getActivo());
-                    return dto;
-                })
+
+            UsuarioEntity usuario = usuarioRepository
+                    .findOneByTallerEntityIdAndRolEntityNombre(t.getId(), "ADMIN_TALLER")
+                    .orElse(null);
+            return mapper.toDto(t, usuario);
+        })
                 .toList();
     }
 
@@ -123,15 +117,11 @@ public class TallerServiceImpl implements TallerService {
         TallerEntity tallerEntity = tallerRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Taller no encontrado"));
 
-        TallerResponseDto dto = new TallerResponseDto();
+        UsuarioEntity usuario = usuarioRepository
+                .findOneByTallerEntityIdAndRolEntityNombre(tallerEntity.getId(), "ADMIN_TALLER")
+                .orElse(null);
 
-        dto.setId(tallerEntity.getId());
-        dto.setNombre(tallerEntity.getNombre());
-        dto.setDireccion(tallerEntity.getDireccion());
-        dto.setTelefono(tallerEntity.getTelefono());
-        dto.setActivo(tallerEntity.getActivo());
-
-        return dto;
+        return mapper.toDto(tallerEntity, usuario);
     }
 
     @Override

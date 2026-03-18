@@ -1,5 +1,6 @@
 package com.example.backend_taller.repository;
 
+import com.example.backend_taller.entity.TallerEntity;
 import com.example.backend_taller.entity.UsuarioEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,6 +17,11 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Integer>
 
     List<UsuarioEntity> findByTallerEntityIdAndRolEntityNombre(Integer tallerId, String nombre);
 
+    Optional<UsuarioEntity> findOneByTallerEntityIdAndRolEntityNombre(Integer tallerId, String nombre);
+
+
     List<UsuarioEntity> findByTallerEntityIdAndActivoTrue(Integer tallerId);
+
+    Optional<UsuarioEntity> findByTallerEntity(TallerEntity taller);
 
 }
