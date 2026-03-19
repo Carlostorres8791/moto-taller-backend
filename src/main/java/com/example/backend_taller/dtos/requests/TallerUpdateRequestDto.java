@@ -10,4 +10,7 @@ public class TallerUpdateRequestDto {
     private String direccion;
     private String telefono;
 
+    private String nombreAdmin;
+    private String emailAdmin;
+
 }

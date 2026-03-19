@@ -49,7 +49,7 @@ public class TallerController {
         service.eliminar(id);
     }
 
-    @DeleteMapping("/desactivar/{id}")
+    @PutMapping("/desactivar/{id}")
     public void desactivar(@PathVariable Integer id){
         service.desactivar(id);
     }

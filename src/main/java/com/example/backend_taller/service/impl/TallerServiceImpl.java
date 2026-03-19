@@ -75,14 +75,38 @@ public class TallerServiceImpl implements TallerService {
         TallerEntity taller = tallerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Taller no encontrado"));
 
+        if (tallerRepository.existsByNombre(dto.getNombreTaller())
+                && !taller.getNombre().equals(dto.getNombreTaller())) {
+
+            throw new IllegalArgumentException("Ya existe un taller con ese nombre");
+
+        }
+
         taller.setNombre(dto.getNombreTaller());
         taller.setDireccion(dto.getDireccion());
         taller.setTelefono(dto.getTelefono());
 
         TallerEntity actualizado = tallerRepository.save(taller);
 
-        UsuarioEntity usuario = usuarioRepository.findByTallerEntity(actualizado)
+        UsuarioEntity usuario = usuarioRepository.findOneByTallerEntityIdAndRolEntityNombre(actualizado.getId(), "ADMIN_TALLER")
                 .orElse(null);
+
+        if (usuario != null) {
+
+            if (dto.getEmailAdmin() != null &&
+                usuarioRepository.findByEmail(dto.getEmailAdmin()).isPresent() &&
+                !usuario.getEmail().equals(dto.getEmailAdmin())) {
+
+                throw new IllegalArgumentException("El email ingresado ya esta en uso ");
+
+            }
+
+            usuario.setNombre(dto.getNombreAdmin());
+            usuario.setEmail(dto.getEmailAdmin());
+
+            usuarioRepository.save(usuario);
+
+        }
 
         return mapper.toDto(actualizado, usuario);
     }
@@ -92,7 +116,7 @@ public class TallerServiceImpl implements TallerService {
         return tallerRepository.findByActivoTrue().stream().map(t ->{
 
             UsuarioEntity usuario = usuarioRepository
-                    .findByTallerEntity(t)
+                    .findOneByTallerEntityIdAndRolEntityNombre(t.getId(), "ADMIN_TALLER")
                     .orElse(null);
             return mapper.toDto(t, usuario);
         })
